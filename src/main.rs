@@ -1,3 +1,7 @@
+use clap::Parser;
+use rtodo::commands::RTodoArgs;
+
 fn main() {
-    println!("Hello, world!");
+    let args = RTodoArgs::parse();
+    rtodo::run(args);
 }
