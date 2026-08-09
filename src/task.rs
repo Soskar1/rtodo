@@ -43,6 +43,10 @@ impl Task {
     pub fn completed(&self) -> bool {
         self.completed
     }
+
+    pub fn complete(&mut self) {
+        self.completed = true;
+    }
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -62,12 +66,24 @@ impl TaskStore {
         self.tasks.len()
     }
 
-    pub fn get_task(&self, id: usize) -> Option<&Task> {
-        self.iter().find(|x| x.id() == id as u64)
+    pub fn get_task(&mut self, id: &u64) -> Option<&mut Task> {
+        self.tasks
+            .iter_mut()
+            .find(|x| x.id() == *id)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Task> {
         self.tasks.iter()
+    }
+
+    pub fn complete_task(&mut self, id: &u64) -> &Task {
+        let task = match self.get_task(id) {
+            Some(task) => task,
+            None => todo!("return error")
+        };
+        
+        task.complete();
+        task
     }
 }
 
@@ -127,7 +143,7 @@ mod task_store_tests {
         assert!(result.is_ok());
         assert_eq!(store.size(), 1);
         
-        let task = store.get_task(1).unwrap();
+        let task = store.get_task(&1).unwrap();
         assert_eq!(task.title(), "hello world");
         assert_eq!(task.completed(), false);
         assert_eq!(task.id(), 1);

@@ -62,11 +62,11 @@ mod tests {
         assert!(result.is_ok());
 
         let json = fs::read_to_string(&path).unwrap();
-        let store: TaskStore = serde_json::from_str(&json).unwrap();
+        let mut store: TaskStore = serde_json::from_str(&json).unwrap();
 
         assert_eq!(store.size(), 1);
 
-        let task = store.get_task(1).unwrap();
+        let task = store.get_task(&1).unwrap();
 
         assert_eq!(task.id(), 1);
         assert_eq!(task.title(), task_name);
@@ -162,11 +162,11 @@ mod tests {
         assert!(result.is_ok());
 
         let json = fs::read_to_string(&path).unwrap();
-        let store: TaskStore = serde_json::from_str(&json).unwrap();
+        let mut store: TaskStore = serde_json::from_str(&json).unwrap();
 
         assert_eq!(store.size(), 2);
 
-        let task = store.get_task(2).unwrap();
+        let task = store.get_task(&2).unwrap();
 
         assert_eq!(task.id(), 2);
         assert_eq!(task.title(), "task2");

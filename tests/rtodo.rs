@@ -3,7 +3,7 @@ use predicates::prelude::predicate;
 use rstest::rstest;
 use tempfile::{TempDir, tempdir};
 use std::path::{Path, PathBuf};
-use std::fs;
+use std::{fs, range};
 
 const RTODO: &str = "rtodo";
 
@@ -31,6 +31,17 @@ fn list_command(path: &Path) -> Command {
     command
         .arg("list")
         .arg(path);
+
+    command
+}
+
+fn done_command(path: &Path, id: u64) -> Command {
+    let mut command = Command::cargo_bin(RTODO).unwrap();
+
+    command
+        .arg("done")
+        .arg(path)
+        .arg(id.to_string());
 
     command
 }
@@ -141,4 +152,20 @@ fn list_invalid_data_file_content_error() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("Invalid data file content:"));
+}
+
+#[test]
+fn done_completes_tasks() {
+    let (_directory, path) = create_temp_store();
+
+    for n in 1..10 {
+        add_command(&path, "task1")
+        .assert()
+        .success();
+
+        done_command(&path, n)
+            .assert()
+            .success()
+            .stdout(format!("Completed task {}: task1\n", n));
+    }
 }
