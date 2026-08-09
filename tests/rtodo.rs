@@ -160,12 +160,26 @@ fn done_completes_tasks() {
 
     for n in 1..10 {
         add_command(&path, "task1")
-        .assert()
-        .success();
+            .assert()
+            .success();
 
         done_command(&path, n)
             .assert()
             .success()
             .stdout(format!("Completed task {}: task1\n", n));
     }
+}
+
+#[test]
+fn done_task_not_found() {
+    let (_directory, path) = create_temp_store();
+
+    add_command(&path, "task1")
+        .assert()
+        .success();
+
+    done_command(&path, 2)
+        .assert()
+        .failure()
+        .stderr(format!("Task 2 was not found\n"));
 }

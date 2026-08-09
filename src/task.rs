@@ -9,7 +9,10 @@ use crate::errors::StorageError;
 #[derive(Debug, PartialEq, Error)]
 pub enum TaskError {
     #[error("task title cannot be empty")]
-    EmptyTitle
+    EmptyTitle,
+
+    #[error("Task {0} was not found")]
+    NotFound(u64)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -76,14 +79,14 @@ impl TaskStore {
         self.tasks.iter()
     }
 
-    pub fn complete_task(&mut self, id: &u64) -> &Task {
+    pub fn complete_task(&mut self, id: &u64) -> Result<&Task, TaskError> {
         let task = match self.get_task(id) {
             Some(task) => task,
-            None => todo!("return error")
+            None => return Err(TaskError::NotFound(id.clone()))
         };
         
         task.complete();
-        task
+        Ok(task)
     }
 }
 
