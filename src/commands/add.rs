@@ -1,7 +1,8 @@
 use std::fs;
 use std::path::PathBuf;
 use clap::Args;
-use crate::{task::{TaskError, TaskStore}};
+use crate::task::{TaskError::{self, EmptyTitle}, TaskStore};
+use thiserror::Error;
 
 #[derive(Args)]
 pub struct AddArgs {
@@ -9,9 +10,18 @@ pub struct AddArgs {
     task_name: String
 }
 
-pub fn add(args: AddArgs) -> Result<(), TaskError> {
+#[derive(Debug, Error)]
+pub enum AddError {
+    #[error(transparent)]
+    Task(#[from] TaskError),
+
+    #[error("I/O error: {0}")]
+    Io(#[from] std::io::Error)
+}
+
+pub fn add(args: AddArgs) -> Result<(), AddError> {
     if args.task_name.is_empty() {
-        return Err(TaskError::EmptyTitle);
+        return Err(AddError::Task(EmptyTitle));
     }
 
     let mut task_store = if args.path.exists() {
@@ -25,7 +35,7 @@ pub fn add(args: AddArgs) -> Result<(), TaskError> {
     println!("Added task {}: {}", task_store.size(), &args.task_name);
 
     let serialized_tasks = serde_json::to_string(&task_store).unwrap();
-    fs::write(&args.path, serialized_tasks).unwrap();
+    fs::write(&args.path, serialized_tasks)?;
     
     Ok(())
 }
@@ -81,7 +91,26 @@ mod tests {
         assert!(result.is_err());
 
         let error = result.unwrap_err();
-        assert_eq!(error, TaskError::EmptyTitle);
+
+        assert!(matches!(
+            error,
+            AddError::Task(TaskError::EmptyTitle)
+        ))
+    }
+
+    #[test]
+    fn add_invalid_path_is_not_allowed() {
+        // Arrange
+        let path = PathBuf::from("/<>:\"\\|?*");
+
+        // Act
+        let result = add(AddArgs {
+            path,
+            task_name: "test".to_string()
+        });
+
+        // Assert
+        assert!(result.is_err());
     }
 }
 
