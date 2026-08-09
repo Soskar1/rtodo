@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 use clap::Args;
-use crate::task::{TaskError::{self, EmptyTitle}, TaskStore};
+use crate::task::{TaskError::{self, EmptyTitle}, TaskStore, deserialize_task_store, serialize_task_store};
 use thiserror::Error;
 
 #[derive(Args)]
@@ -29,7 +29,7 @@ pub fn add(args: AddArgs) -> Result<(), AddError> {
 
     let mut task_store = if args.path.exists() {
         let json_content = fs::read_to_string(&args.path)?;
-        serde_json::from_str(&json_content)?
+        deserialize_task_store(&json_content)?
     } else {
         TaskStore::default()
     };
@@ -37,7 +37,7 @@ pub fn add(args: AddArgs) -> Result<(), AddError> {
     task_store.add(&args.task_name)?;
     println!("Added task {}: {}", task_store.size(), &args.task_name);
 
-    let serialized_tasks = serde_json::to_string_pretty(&task_store)?;
+    let serialized_tasks = serialize_task_store(&task_store)?;
     fs::write(&args.path, serialized_tasks)?;
     
     Ok(())
@@ -71,9 +71,9 @@ mod tests {
 
         assert_eq!(store.size(), 1);
 
-        let task = store.get_task(0).unwrap();
+        let task = store.get_task(1).unwrap();
 
-        assert_eq!(task.id(), 0);
+        assert_eq!(task.id(), 1);
         assert_eq!(task.title(), task_name);
         assert_eq!(task.completed(), false);
     }
@@ -171,9 +171,9 @@ mod tests {
 
         assert_eq!(store.size(), 2);
 
-        let task = store.get_task(1).unwrap();
+        let task = store.get_task(2).unwrap();
 
-        assert_eq!(task.id(), 1);
+        assert_eq!(task.id(), 2);
         assert_eq!(task.title(), "task2");
         assert_eq!(task.completed(), false);
     }

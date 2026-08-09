@@ -47,7 +47,7 @@ pub struct TaskStore {
 
 impl TaskStore {
     pub fn add(&mut self, task_title: &str) -> Result<(), TaskError> {
-        let task = Task::new(self.size() as u64, task_title)?;
+        let task = Task::new(self.size() as u64 + 1, task_title)?;
         self.tasks.push(task);
 
         Ok(())
@@ -58,8 +58,22 @@ impl TaskStore {
     }
 
     pub fn get_task(&self, id: usize) -> Option<&Task> {
-        self.tasks.get(id)
+        self.iter().find(|x| x.id() == id as u64)
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Task> {
+        self.tasks.iter()
+    }
+}
+
+pub fn serialize_task_store(store: &TaskStore) -> Result<String, serde_json::Error> {
+    let json = serde_json::to_string_pretty(&store)?;
+    Ok(json)
+}
+
+pub fn deserialize_task_store(json: &str) -> Result<TaskStore, serde_json::Error> {
+    let store = serde_json::from_str(&json)?;
+    Ok(store)
 }
 
 #[cfg(test)]
@@ -107,9 +121,9 @@ mod task_store_tests {
         assert!(result.is_ok());
         assert_eq!(store.size(), 1);
         
-        let task = store.get_task(0).unwrap();
+        let task = store.get_task(1).unwrap();
         assert_eq!(task.title(), "hello world");
         assert_eq!(task.completed(), false);
-        assert_eq!(task.id(), 0);
+        assert_eq!(task.id(), 1);
     }
 }
