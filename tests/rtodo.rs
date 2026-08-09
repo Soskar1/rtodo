@@ -53,7 +53,6 @@ fn add_fails_with_invalid_path() {
 
 #[test]
 fn add_invalid_data_file_content_error() {
-    // Arrange
     let directory = tempdir().unwrap();
     let path = directory.path().join("todo.txt");
 
@@ -67,4 +66,25 @@ fn add_invalid_data_file_content_error() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("Invalid data file content:"));
+}
+
+#[test]
+fn add_mutliple_valid_tasks() {
+    let directory = tempdir().unwrap();
+    let path = directory.path().join("todo.txt");
+
+    Command::cargo_bin("rtodo")
+        .unwrap()
+        .arg("add")
+        .arg(&path)
+        .arg("task1");
+
+    Command::cargo_bin("rtodo")
+        .unwrap()
+        .arg("add")
+        .arg(&path)
+        .arg("task2")
+        .assert()
+        .success()
+        .stdout(predicate::eq("Added task 1: task2\n"));
 }

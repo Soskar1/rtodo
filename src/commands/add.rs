@@ -144,7 +144,38 @@ mod tests {
             error,
             AddError::Json(_)
         ))
+    }
 
+    #[test]
+    fn add_task_count_increments() {
+        // Arrange
+        let directory = tempdir().unwrap();
+        let path = directory.path().join("todo.txt");
+
+        let _ = add(AddArgs {
+            path: path.clone(),
+            task_name: "task1".to_string()
+        });
+
+        // Act
+        let result = add(AddArgs {
+            path: path.clone(),
+            task_name: "task2".to_string()
+        });
+
+        // Assert
+        assert!(result.is_ok());
+
+        let json = fs::read_to_string(&path).unwrap();
+        let store: TaskStore = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(store.size(), 2);
+
+        let task = store.get_task(1).unwrap();
+
+        assert_eq!(task.id(), 1);
+        assert_eq!(task.title(), "task2");
+        assert_eq!(task.completed(), false);
     }
 }
 
