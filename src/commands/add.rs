@@ -37,7 +37,7 @@ pub fn add(args: AddArgs) -> Result<(), AddError> {
     task_store.add(&args.task_name)?;
     println!("Added task {}: {}", task_store.size(), &args.task_name);
 
-    let serialized_tasks = serde_json::to_string(&task_store)?;
+    let serialized_tasks = serde_json::to_string_pretty(&task_store)?;
     fs::write(&args.path, serialized_tasks)?;
     
     Ok(())
