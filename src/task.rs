@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{fmt, path::Path};
 use std::fs;
 
 use serde::{Deserialize, Serialize};
@@ -49,6 +49,17 @@ impl Task {
 
     pub fn complete(&mut self) {
         self.completed = true;
+    }
+}
+
+impl fmt::Display for Task {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "[{}] {}. {}",
+            if self.completed { "x" } else { " " },
+            self.id,
+            self.title)
     }
 }
 

@@ -27,7 +27,7 @@ pub fn list(args: ListArgs) -> Result<(), ListError> {
 
     task_store
         .iter()
-        .for_each(|x| println!("[ ] {}. {}", x.id(), x.title()));
+        .for_each(|x| println!("{}", x));
 
     Ok(())
 }

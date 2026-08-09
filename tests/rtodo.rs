@@ -3,7 +3,7 @@ use predicates::prelude::predicate;
 use rstest::rstest;
 use tempfile::{TempDir, tempdir};
 use std::path::{Path, PathBuf};
-use std::{fs, range};
+use std::{fs};
 
 const RTODO: &str = "rtodo";
 
@@ -182,4 +182,22 @@ fn done_task_not_found() {
         .assert()
         .failure()
         .stderr(format!("Task 2 was not found\n"));
+}
+
+#[test]
+fn list_displays_done_tasks() {
+    let (_directory, path) = create_temp_store();
+
+    add_command(&path, "task1")
+        .assert()
+        .success();
+
+    done_command(&path, 1)
+        .assert()
+        .success();
+
+    list_command(&path)
+        .assert()
+        .success()
+        .stdout("[x] 1. task1\n");
 }
