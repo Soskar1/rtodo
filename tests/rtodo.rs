@@ -106,3 +106,15 @@ fn list_prints_task() {
         .success()
         .stdout("[ ] 1. task1\n");
 }
+
+#[test]
+fn list_no_tasks_found() {
+    let (_directory, path) = create_temp_store();
+
+    fs::write(&path, "{\"tasks\": []}").unwrap();
+
+    list_command(&path)
+        .assert()
+        .success()
+        .stdout("No tasks found.\n");
+}

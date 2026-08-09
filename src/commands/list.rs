@@ -20,6 +20,11 @@ pub fn list(args: ListArgs) -> Result<(), ListError> {
     let json_content = fs::read_to_string(&args.path).unwrap();
     let task_store = deserialize_task_store(&json_content).unwrap();
 
+    if task_store.size() == 0 {
+        println!("No tasks found.");
+        return Ok(());
+    }
+
     task_store
         .iter()
         .for_each(|x| println!("[ ] {}. {}", x.id(), x.title()));
