@@ -1,8 +1,8 @@
 use clap::Args;
 use thiserror::Error;
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 
-use crate::task::deserialize_task_store;
+use crate::{errors::StorageError, task::load_store};
 
 #[derive(Args)]
 pub struct ListArgs {
@@ -11,18 +11,14 @@ pub struct ListArgs {
 
 #[derive(Debug, Error)]
 pub enum ListError {
-    #[error("I/O error: {0}")]
-    Io(#[from] std::io::Error),
-
-    #[error("Invalid data file content: {0}")]
-    Json(#[from] serde_json::Error)
+   #[error(transparent)]
+    Storage(#[from] StorageError)
 }
 
 // Prerequesties: valid path, file must exist, file must be valid
 // Output: All stored tasks
 pub fn list(args: ListArgs) -> Result<(), ListError> {
-    let json_content = fs::read_to_string(&args.path)?;
-    let task_store = deserialize_task_store(&json_content)?;
+    let task_store = load_store(&args.path)?;
 
     if task_store.size() == 0 {
         println!("No tasks found.");
@@ -56,7 +52,7 @@ mod tests {
 
         assert!(matches!(
             error,
-            ListError::Io(_)
+            ListError::Storage(StorageError::Io(_))
         ))
     }
 
@@ -76,7 +72,7 @@ mod tests {
 
         assert!(matches!(
             error,
-            ListError::Io(_)
+            ListError::Storage(StorageError::Io(_))
         ))
     }
 }

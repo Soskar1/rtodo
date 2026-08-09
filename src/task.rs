@@ -1,5 +1,10 @@
+use std::path::Path;
+use std::fs;
+
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+
+use crate::errors::StorageError;
 
 #[derive(Debug, PartialEq, Error)]
 pub enum TaskError {
@@ -66,14 +71,15 @@ impl TaskStore {
     }
 }
 
-pub fn serialize_task_store(store: &TaskStore) -> Result<String, serde_json::Error> {
-    let json = serde_json::to_string_pretty(&store)?;
-    Ok(json)
+pub fn save_store(path: &Path, store: &TaskStore) -> Result<(), StorageError> {
+    let json = serde_json::to_string(store)?;
+    fs::write(path, json)?;
+    Ok(())
 }
 
-pub fn deserialize_task_store(json: &str) -> Result<TaskStore, serde_json::Error> {
-    let store = serde_json::from_str(&json)?;
-    Ok(store)
+pub fn load_store(path: &Path) -> Result<TaskStore, StorageError> {
+    let json = fs::read_to_string(path)?;
+    Ok(serde_json::from_str(&json)?)
 }
 
 #[cfg(test)]

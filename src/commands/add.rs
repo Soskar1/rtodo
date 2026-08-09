@@ -1,7 +1,6 @@
-use std::fs;
 use std::path::PathBuf;
 use clap::Args;
-use crate::task::{TaskError::{self, EmptyTitle}, TaskStore, deserialize_task_store, serialize_task_store};
+use crate::{errors::StorageError, task::{TaskError::{self, EmptyTitle}, TaskStore, load_store, save_store}};
 use thiserror::Error;
 
 #[derive(Args)]
@@ -15,11 +14,8 @@ pub enum AddError {
     #[error(transparent)]
     Task(#[from] TaskError),
 
-    #[error("I/O error: {0}")]
-    Io(#[from] std::io::Error),
-
-    #[error("Invalid data file content: {0}")]
-    Json(#[from] serde_json::Error)
+    #[error(transparent)]
+    Storage(#[from] StorageError)
 }
 
 pub fn add(args: AddArgs) -> Result<(), AddError> {
@@ -28,8 +24,7 @@ pub fn add(args: AddArgs) -> Result<(), AddError> {
     }
 
     let mut task_store = if args.path.exists() {
-        let json_content = fs::read_to_string(&args.path)?;
-        deserialize_task_store(&json_content)?
+        load_store(&args.path)?
     } else {
         TaskStore::default()
     };
@@ -37,8 +32,7 @@ pub fn add(args: AddArgs) -> Result<(), AddError> {
     task_store.add(&args.task_name)?;
     println!("Added task {}: {}", task_store.size(), &args.task_name);
 
-    let serialized_tasks = serialize_task_store(&task_store)?;
-    fs::write(&args.path, serialized_tasks)?;
+    save_store(&args.path, &task_store)?;
     
     Ok(())
 }
@@ -48,6 +42,7 @@ mod tests {
     use super::*;
     use rstest::rstest;
     use crate::test_helpers::TestStore;
+    use std::fs;
 
     #[rstest]
     #[case("Learn Rust")]
@@ -118,7 +113,7 @@ mod tests {
 
         assert!(matches!(
             error,
-            AddError::Io(_)
+            AddError::Storage(StorageError::Io(_))
         ))
     }
 
@@ -142,7 +137,7 @@ mod tests {
 
         assert!(matches!(
             error,
-            AddError::Json(_)
+            AddError::Storage(StorageError::Json(_))
         ))
     }
 
