@@ -3,6 +3,7 @@ use predicates::prelude::predicate;
 use rstest::rstest;
 use tempfile::tempdir;
 use std::path::PathBuf;
+use std::fs;
 
 #[rstest]
 #[case("Learn Rust")]
@@ -48,4 +49,22 @@ fn add_fails_with_invalid_path() {
         .assert()
         .failure()
         .stderr(predicate::str::contains("I/O error:"));
+}
+
+#[test]
+fn add_invalid_data_file_content_error() {
+    // Arrange
+    let directory = tempdir().unwrap();
+    let path = directory.path().join("todo.txt");
+
+    fs::write(&path, "Hello").unwrap();
+
+    Command::cargo_bin("rtodo")
+        .unwrap()
+        .arg("add")
+        .arg(&path)
+        .arg("test")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Invalid data file content:"));
 }

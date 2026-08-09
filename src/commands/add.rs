@@ -16,7 +16,10 @@ pub enum AddError {
     Task(#[from] TaskError),
 
     #[error("I/O error: {0}")]
-    Io(#[from] std::io::Error)
+    Io(#[from] std::io::Error),
+
+    #[error("Invalid data file content: {0}")]
+    Json(#[from] serde_json::Error)
 }
 
 pub fn add(args: AddArgs) -> Result<(), AddError> {
@@ -25,8 +28,8 @@ pub fn add(args: AddArgs) -> Result<(), AddError> {
     }
 
     let mut task_store = if args.path.exists() {
-        let json_content = fs::read_to_string(&args.path).unwrap();
-        serde_json::from_str(&json_content).unwrap()
+        let json_content = fs::read_to_string(&args.path)?;
+        serde_json::from_str(&json_content)?
     } else {
         TaskStore::default()
     };
@@ -34,7 +37,7 @@ pub fn add(args: AddArgs) -> Result<(), AddError> {
     task_store.add(&args.task_name)?;
     println!("Added task {}: {}", task_store.size(), &args.task_name);
 
-    let serialized_tasks = serde_json::to_string(&task_store).unwrap();
+    let serialized_tasks = serde_json::to_string(&task_store)?;
     fs::write(&args.path, serialized_tasks)?;
     
     Ok(())
@@ -111,6 +114,37 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
+        let error = result.unwrap_err();
+
+        assert!(matches!(
+            error,
+            AddError::Io(_)
+        ))
+    }
+
+    #[test]
+    fn add_fails_with_invalid_file_data() {
+        // Arrange
+        let directory = tempdir().unwrap();
+        let path = directory.path().join("todo.txt");
+
+        fs::write(&path, "Hello").unwrap();
+
+        // Act
+        let result = add(AddArgs {
+            path,
+            task_name: "test".to_string()
+        });
+
+        // Assert
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+
+        assert!(matches!(
+            error,
+            AddError::Json(_)
+        ))
+
     }
 }
 
