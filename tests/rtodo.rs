@@ -118,3 +118,27 @@ fn list_no_tasks_found() {
         .success()
         .stdout("No tasks found.\n");
 }
+
+#[rstest]
+#[case("/<>:\"\\|?*")]
+#[case("todo.json")]
+fn list_io_errors(#[case] path_raw: &str) {
+    let path = PathBuf::from(path_raw);
+    
+    list_command(&path)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("I/O error:"));
+}
+
+#[test]
+fn list_invalid_data_file_content_error() {
+    let (_directory, path) = create_temp_store();
+
+    fs::write(&path, "Hello").unwrap();
+
+    list_command(&path)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Invalid data file content:"));
+}

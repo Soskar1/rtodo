@@ -47,15 +47,15 @@ pub fn add(args: AddArgs) -> Result<(), AddError> {
 mod tests {
     use super::*;
     use rstest::rstest;
-    use tempfile::tempdir;
+    use crate::test_helpers::TestStore;
 
     #[rstest]
     #[case("Learn Rust")]
     #[case("Learn ownership")]
     fn add_task(#[case] task_name: &str) {
         // Arrange
-        let directory = tempdir().unwrap();
-        let path = directory.path().join("todo.txt");
+        let store = TestStore::new();
+        let path = store.path;
 
         // Act
         let result = add(AddArgs {
@@ -81,8 +81,8 @@ mod tests {
     #[test]
     fn add_empty_title_task_is_not_allowed() {
         // Arrange
-        let directory = tempdir().unwrap();
-        let path = directory.path().join("todo.txt");
+        let store = TestStore::new();
+        let path = store.path;
 
         // Act
         let result = add(AddArgs {
@@ -125,8 +125,8 @@ mod tests {
     #[test]
     fn add_fails_with_invalid_file_data() {
         // Arrange
-        let directory = tempdir().unwrap();
-        let path = directory.path().join("todo.txt");
+        let store = TestStore::new();
+        let path = store.path;
 
         fs::write(&path, "Hello").unwrap();
 
@@ -149,8 +149,8 @@ mod tests {
     #[test]
     fn add_task_count_increments() {
         // Arrange
-        let directory = tempdir().unwrap();
-        let path = directory.path().join("todo.txt");
+        let store = TestStore::new();
+        let path = store.path;
 
         let _ = add(AddArgs {
             path: path.clone(),
