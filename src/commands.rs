@@ -1,5 +1,7 @@
 use clap::{Parser, Subcommand};
 
+use crate::task::TaskError;
+
 pub mod add;
 
 #[derive(Parser)]
@@ -9,19 +11,19 @@ pub struct RTodoArgs {
     command: Commands
 }
 
+impl RTodoArgs {
+    pub fn execute(self) -> Result<(), TaskError>{
+        self.command.execute()
+    }
+}
+
 #[derive(Subcommand)]
 enum Commands {
     Add(add::AddArgs)
 }
 
-impl RTodoArgs {
-    pub fn execute(self) {
-        self.command.execute();
-    }
-}
-
 impl Commands {
-    fn execute(self) {
+    fn execute(self) -> Result<(), TaskError> {
         match self {
             Self::Add(args) => add::add(args)
         }

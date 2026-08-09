@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Error)]
 pub enum TaskError {
-    EmptyTitle,
-    NegativeId
+    #[error("task title cannot be empty")]
+    EmptyTitle
 }
 
 #[derive(Serialize, Deserialize)]
