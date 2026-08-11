@@ -15,7 +15,7 @@ pub enum TaskError {
     NotFound(u64)
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Task {
     id: u64,
     title: String,
@@ -99,10 +99,23 @@ impl TaskStore {
         task.complete();
         Ok(task)
     }
+
+    pub fn remove_task(&mut self, id: &u64) -> Result<Task, TaskError> {
+        let id = id.clone();
+        let position = match self.tasks.iter().position(|x| x.id() == id) {
+            Some(position) => position,
+            None => return Err(TaskError::NotFound(id))
+        };
+
+        let task = self.tasks[position].clone();
+        self.tasks.remove(position);
+
+        Ok(task)
+    }
 }
 
 pub fn save_store(path: &Path, store: &TaskStore) -> Result<(), StorageError> {
-    let json = serde_json::to_string(store)?;
+    let json = serde_json::to_string_pretty(store)?;
     fs::write(path, json)?;
     Ok(())
 }

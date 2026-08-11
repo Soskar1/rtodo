@@ -2,10 +2,12 @@ use clap::{Parser, Subcommand};
 use thiserror::Error;
 
 use crate::commands::{add::AddError, done::DoneError, list::ListError};
+use crate::commands::remove::RemoveError;
 
-pub mod add;
-pub mod list;
-pub mod done;
+mod add;
+mod list;
+mod done;
+mod remove;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -24,7 +26,8 @@ impl RTodoArgs {
 enum Commands {
     Add(add::AddArgs),
     List(list::ListArgs),
-    Done(done::DoneArgs)
+    Done(done::DoneArgs),
+    Remove(remove::RemoveArgs)
 }
 
 #[derive(Debug, Error)]
@@ -36,7 +39,10 @@ pub enum RTodoError {
     List(#[from] ListError),
 
     #[error(transparent)]
-    Done(#[from] DoneError)
+    Done(#[from] DoneError),
+    
+    #[error(transparent)]
+    Remove(#[from] RemoveError),
 }
 
 impl Commands {
@@ -44,7 +50,8 @@ impl Commands {
         match self {
             Self::Add(args) => add::add(args)?,
             Self::List(args) => list::list(args)?,
-            Self::Done(args) => done::done(args)?
+            Self::Done(args) => done::done(args)?,
+            Self::Remove(args) => remove::remove(args)?
         }
 
         Ok(())
