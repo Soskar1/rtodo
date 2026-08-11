@@ -22,7 +22,7 @@ pub enum DoneError {
 pub fn done(args: DoneArgs) -> Result<(), DoneError> {
     let mut task_store = load_store(&args.path)?;
 
-    let task = task_store.complete_task(&args.id)?;
+    let task = task_store.complete_task(args.id)?;
 
     println!("Completed task {}: {}", &args.id, task.title());
     

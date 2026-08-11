@@ -15,7 +15,7 @@ pub enum TaskError {
     NotFound(u64)
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct Task {
     id: u64,
     title: String,
@@ -24,6 +24,8 @@ pub struct Task {
 
 impl Task {
     pub fn new(id: u64, title: &str) -> Result<Self, TaskError> {
+        let title = title.trim();
+        
         if title.is_empty() {
             return Err(TaskError::EmptyTitle);
         }
@@ -69,46 +71,50 @@ pub struct TaskStore {
 }
 
 impl TaskStore {
-    pub fn add(&mut self, task_title: &str) -> Result<(), TaskError> {
-        let task = Task::new(self.size() as u64 + 1, task_title)?;
+    pub fn add(&mut self, task_title: &str) -> Result<&Task, TaskError> {
+        let next_id = self.tasks
+            .iter()
+            .map(Task::id)
+            .max()
+            .unwrap_or(0)
+            + 1;
+
+        let task = Task::new(next_id, task_title)?;
         self.tasks.push(task);
 
-        Ok(())
+        Ok(self.tasks.last().unwrap())
     }
 
     pub fn size(&self) -> usize {
         self.tasks.len()
     }
 
-    pub fn get_task(&mut self, id: &u64) -> Option<&mut Task> {
+    pub fn get_task(&mut self, id: u64) -> Option<&mut Task> {
         self.tasks
             .iter_mut()
-            .find(|x| x.id() == *id)
+            .find(|x| x.id() == id)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Task> {
         self.tasks.iter()
     }
 
-    pub fn complete_task(&mut self, id: &u64) -> Result<&Task, TaskError> {
-        let task = match self.get_task(id) {
-            Some(task) => task,
-            None => return Err(TaskError::NotFound(id.clone()))
-        };
+    pub fn complete_task(&mut self, id: u64) -> Result<&Task, TaskError> {
+        let task = self
+            .get_task(id)
+            .ok_or(TaskError::NotFound(id))?;
         
         task.complete();
         Ok(task)
     }
 
-    pub fn remove_task(&mut self, id: &u64) -> Result<Task, TaskError> {
-        let id = id.clone();
+    pub fn remove_task(&mut self, id: u64) -> Result<Task, TaskError> {
         let position = match self.tasks.iter().position(|x| x.id() == id) {
             Some(position) => position,
             None => return Err(TaskError::NotFound(id))
         };
 
-        let task = self.tasks[position].clone();
-        self.tasks.remove(position);
+        let task = self.tasks.remove(position);
 
         Ok(task)
     }
@@ -170,7 +176,7 @@ mod task_store_tests {
         assert!(result.is_ok());
         assert_eq!(store.size(), 1);
         
-        let task = store.get_task(&1).unwrap();
+        let task = store.get_task(1).unwrap();
         assert_eq!(task.title(), "hello world");
         assert_eq!(task.completed(), false);
         assert_eq!(task.id(), 1);

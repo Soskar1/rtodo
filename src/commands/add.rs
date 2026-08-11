@@ -19,18 +19,14 @@ pub enum AddError {
 }
 
 pub fn add(args: AddArgs) -> Result<(), AddError> {
-    if args.task_name.is_empty() {
-        return Err(AddError::Task(EmptyTitle));
-    }
-
     let mut task_store = if args.path.exists() {
         load_store(&args.path)?
     } else {
         TaskStore::default()
     };
 
-    task_store.add(&args.task_name)?;
-    println!("Added task {}: {}", task_store.size(), &args.task_name);
+    let task = task_store.add(&args.task_name)?;
+    println!("Added task {}: {}", task.id(), task.title());
 
     save_store(&args.path, &task_store)?;
     
@@ -66,7 +62,7 @@ mod tests {
 
         assert_eq!(store.size(), 1);
 
-        let task = store.get_task(&1).unwrap();
+        let task = store.get_task(1).unwrap();
 
         assert_eq!(task.id(), 1);
         assert_eq!(task.title(), task_name);
@@ -166,7 +162,7 @@ mod tests {
 
         assert_eq!(store.size(), 2);
 
-        let task = store.get_task(&2).unwrap();
+        let task = store.get_task(2).unwrap();
 
         assert_eq!(task.id(), 2);
         assert_eq!(task.title(), "task2");

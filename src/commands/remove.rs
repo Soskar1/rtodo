@@ -23,7 +23,7 @@ pub enum RemoveError {
 pub fn remove(args: RemoveArgs) -> Result<(), RemoveError> {
     let mut task_store = load_store(&args.path)?;
 
-    let task = task_store.remove_task(&args.id)?;
+    let task = task_store.remove_task(args.id)?;
 
     println!("Removed task {}: {}", &args.id, task.title());
 

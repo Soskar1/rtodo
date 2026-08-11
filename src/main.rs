@@ -1,7 +1,5 @@
-use std::error::Error;
-
 use clap::Parser;
-use rtodo::commands::RTodoArgs;
+use rtodo::commands::{RTodoArgs, RTodoError};
 
 fn main() {
     if let Err(error) = run() {
@@ -10,7 +8,7 @@ fn main() {
     }
 }
 
-fn run() -> Result<(), Box<dyn Error>> {
+fn run() -> Result<(), RTodoError> {
     let args = RTodoArgs::parse();
     rtodo::run(args)?;
 
